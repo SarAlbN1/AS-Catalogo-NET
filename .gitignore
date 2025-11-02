@@ -4,3 +4,4 @@ obj/
 .idea/
 *.user
 *.DS_Store
+Catalogo.Api/Data/catalogo.db

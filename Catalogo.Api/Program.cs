@@ -1,6 +1,11 @@
+// Usings explícitos para evitar errores del analizador en VS Code
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+
 using Catalogo.Api.Data;
 using Catalogo.Api.Services;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +23,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Swagger UI en Dev
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -28,7 +32,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// Crear DB si no existe + sembrar datos demo
+// Crear DB si no existe + seed
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CatalogoDb>();
