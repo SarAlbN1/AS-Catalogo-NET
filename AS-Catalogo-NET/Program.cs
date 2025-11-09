@@ -1,5 +1,6 @@
 using AS_Catalogo_NET.Persistance;
 using AS_Catalogo_NET.Services;
+using AS_Catalogo_NET.GrpcClients;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,11 +14,12 @@ builder.Services.AddControllers();
 
 // MySQL (Pomelo)
 var connection = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Port=3306;Database=catalogo_db;User=root;Password=tu_contraseña;";
+    ?? "Server=localhost;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;";
 builder.Services.AddDbContext<MyAppDbContext>(opt =>
     opt.UseMySql(connection, ServerVersion.AutoDetect(connection)));
 
-// IoC
+// gRPC Client + Service con fallback
+builder.Services.AddScoped<ProductosGrpcClient>();
 builder.Services.AddScoped<IProductosService, ProductosService>();
 
 var app = builder.Build();
@@ -31,7 +33,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// Migraciones automáticas
+// Migraciones automáticas (solo si usa EF)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MyAppDbContext>();
