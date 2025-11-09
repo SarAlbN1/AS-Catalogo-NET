@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option csharp_namespace = "DataTier.Protos";
+
+service ProductosData {
+  rpc GetAllProductos (Empty) returns (ProductosList);
+  rpc GetProductoById (ProductoId) returns (Producto);
+  rpc CreateProducto (CreateProductoRequest) returns (Producto);
+  rpc UpdateProducto (UpdateProductoRequest) returns (Producto);
+  rpc DeleteProducto (ProductoId) returns (DeleteResponse);
+}
+
+message Empty {}
+
+message ProductoId {
+  int32 id = 1;
+}
+
+message Producto {
+  int32 id = 1;
+  string nombre = 2;
+  string descripcion = 3;
+  double precio = 4;
+  int32 cantidad_disponible = 5;
+  string fecha_creacion = 6;
+  int32 catalogo_id = 7;
+}
+
+message ProductosList {
+  repeated Producto productos = 1;
+}
+
+message CreateProductoRequest {
+  string nombre = 1;
+  string descripcion = 2;
+  double precio = 3;
+  int32 cantidad_disponible = 4;
+  int32 catalogo_id = 5;
+}
+
+message UpdateProductoRequest {
+  int32 id = 1;
+  string nombre = 2;
+  string descripcion = 3;
+  double precio = 4;
+  int32 cantidad_disponible = 5;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
