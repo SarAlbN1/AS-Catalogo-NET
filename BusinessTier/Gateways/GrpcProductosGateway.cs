@@ -1,7 +1,7 @@
-using AS_Catalogo_NET.DTOs;
-using AS_Catalogo_NET.GrpcClients;
+using BusinessTier.DTOs;
+using BusinessTier.GrpcClients;
 
-namespace AS_Catalogo_NET.Gateways;
+namespace BusinessTier.Gateways;
 
 public class GrpcProductosGateway : IProductosGateway
 {

@@ -1,9 +1,9 @@
-using AS_Catalogo_NET.DTOs;
-using AS_Catalogo_NET.Model;
-using AS_Catalogo_NET.Persistance;
+using BusinessTier.DTOs;
+using BusinessTier.Model;
+using BusinessTier.Persistance;
 using Microsoft.EntityFrameworkCore;
 
-namespace AS_Catalogo_NET.Gateways;
+namespace BusinessTier.Gateways;
 
 public class EfProductosGateway : IProductosGateway
 {

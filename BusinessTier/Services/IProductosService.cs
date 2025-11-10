@@ -1,12 +1,12 @@
-using AS_Catalogo_NET.DTOs;
+using BusinessTier.DTOs;
 
-namespace AS_Catalogo_NET.Gateways;
+namespace BusinessTier.Services;
 
-public interface IProductosGateway
+public interface IProductosService
 {
     Task<IEnumerable<ProductoDto>> GetAllAsync();
     Task<ProductoDto?> GetByIdAsync(int id);
     Task<ProductoDto> CreateAsync(ProductoCreateDto dto);
-    Task<ProductoDto> UpdateAsync(int id, ProductoUpdateDto dto);
+    Task<ProductoDto?> UpdateAsync(int id, ProductoUpdateDto dto);
     Task<bool> DeleteAsync(int id);
 }

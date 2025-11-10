@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using CatalogoEntity = AS_Catalogo_NET.Model.Catalogo;
-using ProductoEntity = AS_Catalogo_NET.Model.Producto;
+using CatalogoEntity = BusinessTier.Model.Catalogo;
+using ProductoEntity = BusinessTier.Model.Producto;
 
-namespace AS_Catalogo_NET.Persistance;
+namespace BusinessTier.Persistance;
 
 public class MyAppDbContext : DbContext
 {

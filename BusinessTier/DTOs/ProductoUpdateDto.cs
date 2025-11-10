@@ -1,4 +1,4 @@
-namespace AS_Catalogo_NET.DTOs;
+namespace BusinessTier.DTOs;
 
 public class ProductoUpdateDto
 {

@@ -1,6 +1,6 @@
-@BusinessTier_HostAddress = http://localhost:5054
+@AS_Catalogo_NET_HostAddress = http://localhost:5290
 
-GET {{BusinessTier_HostAddress}}/weatherforecast/
+GET {{AS_Catalogo_NET_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

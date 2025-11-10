@@ -1,4 +1,4 @@
-namespace AS_Catalogo_NET.Model;
+namespace BusinessTier.Model;
 
 public class Catalogo
 {
