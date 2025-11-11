@@ -148,6 +148,8 @@ public sealed class ProductosGrpcClient
         Precio = (decimal)p.Precio,
         CantidadDisponible = p.CantidadDisponible,
         FechaCreacion = DateTime.TryParse(p.FechaCreacion, out var f) ? f : DateTime.UtcNow,
-        CatalogoId = p.CatalogoId
+        CatalogoId = p.CatalogoId,
+        FechaActualizacion = DateTime.TryParse(p.FechaActualizacion, out var fa) ? fa : null,
+        Activo = p.Activo
     };
 }
