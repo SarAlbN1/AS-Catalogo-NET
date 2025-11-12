@@ -24,7 +24,7 @@ services:
       retries: 5
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.4.0
     container_name: catalogo_zookeeper
     restart: unless-stopped
     environment:
@@ -41,7 +41,7 @@ services:
       retries: 5
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: catalogo_kafka
     restart: unless-stopped
     depends_on:
@@ -73,7 +73,6 @@ services:
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5001
       - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
       - Kafka__BootstrapServers=kafka:29092
       - Kafka__Topic=product-events
@@ -97,6 +96,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - GrpcSettings__DataTierUrl=http://datatier:5001
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
+      - PreferGrpc=true
     ports:
       - "8080:8080"
     depends_on:

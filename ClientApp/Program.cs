@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Globalization;
+using System.Net.Http.Json;
 using System.Text.Json;
 using ClientApp.DTOs;
 
@@ -7,7 +8,7 @@ namespace ClientApp;
 class Program
 {
     private static readonly HttpClient httpClient = new HttpClient();
-    private static string baseUrl = "http://localhost:8080/api";
+    private static string baseUrl = (Environment.GetEnvironmentVariable("CLIENTAPP_BASEURL") ?? "http://localhost:8080/api").TrimEnd('/');
 
     static async Task Main(string[] args)
     {
@@ -15,18 +16,17 @@ class Program
         
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("╔════════════════════════════════════════════════╗");
-        Console.WriteLine("║   📦 CLIENTE CATÁLOGO DE PRODUCTOS 📦         ║");
+        Console.WriteLine("║   CLIENTE CATÁLOGO DE PRODUCTOS               ║");
         Console.WriteLine("╚════════════════════════════════════════════════╝");
         Console.ResetColor();
         
-        Console.WriteLine("\n🔧 Configuración:");
-        Console.Write("Ingrese la URL del API (Enter para usar http://localhost:8080/api): ");
-        var url = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(url))
+        if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
         {
-            baseUrl = url.TrimEnd('/');
+            baseUrl = args[0].TrimEnd('/');
         }
-        Console.WriteLine($"✅ Usando URL: {baseUrl}\n");
+
+        Console.WriteLine("\nCONFIGURACIÓN:");
+        Console.WriteLine($"Usando URL del API: {baseUrl}\n");
 
         bool salir = false;
 
@@ -60,12 +60,12 @@ class Program
                     case "0":
                         salir = true;
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("\n👋 ¡Hasta luego!");
+                        Console.WriteLine("\nHasta luego!");
                         Console.ResetColor();
                         break;
                     default:
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("❌ Opción no válida");
+                        Console.WriteLine("Opción no válida");
                         Console.ResetColor();
                         break;
                 }
@@ -73,14 +73,14 @@ class Program
             catch (HttpRequestException ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n❌ Error de conexión: {ex.Message}");
+                Console.WriteLine($"\nError de conexión: {ex.Message}");
                 Console.WriteLine("Verifica que el API esté ejecutándose en " + baseUrl);
                 Console.ResetColor();
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n❌ Error: {ex.Message}");
+                Console.WriteLine($"\nError: {ex.Message}");
                 Console.ResetColor();
             }
 
@@ -101,25 +101,25 @@ class Program
         Console.WriteLine("╚════════════════════════════════════════════════╝");
         Console.ResetColor();
         
-        Console.WriteLine("\n📋 CONSULTAS:");
-        Console.WriteLine("  1️⃣  - Listar todos los productos");
-        Console.WriteLine("  2️⃣  - Buscar producto por ID");
-        Console.WriteLine("  6️⃣  - Buscar producto por nombre");
+        Console.WriteLine("\nCONSULTAS:");
+        Console.WriteLine("  (1) - Listar todos los productos");
+        Console.WriteLine("  (2) - Buscar producto por ID");
+        Console.WriteLine("  (6) - Buscar producto por nombre");
         
-        Console.WriteLine("\n✏️  OPERACIONES:");
-        Console.WriteLine("  3️⃣  - Crear nuevo producto");
-        Console.WriteLine("  4️⃣  - Actualizar producto");
-        Console.WriteLine("  5️⃣  - Eliminar producto");
+        Console.WriteLine("\nOPERACIONES:");
+        Console.WriteLine("  (3) - Crear nuevo producto");
+        Console.WriteLine("  (4) - Actualizar producto");
+        Console.WriteLine("  (5) - Eliminar producto");
         
-        Console.WriteLine("\n  0️⃣  - Salir");
+        Console.WriteLine("\n  (0) - Salir");
         
-        Console.Write("\n👉 Seleccione una opción: ");
+        Console.Write("\nSeleccione una opción: ");
     }
 
     static async Task ListarProductos()
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("\n📋 LISTANDO TODOS LOS PRODUCTOS...\n");
+        Console.WriteLine("\nLISTANDO TODOS LOS PRODUCTOS...\n");
         Console.ResetColor();
 
         var response = await httpClient.GetAsync($"{baseUrl}/productos");
@@ -131,7 +131,7 @@ class Program
             if (productos == null || productos.Count == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("⚠️  No hay productos registrados");
+                Console.WriteLine("No hay productos registrados");
                 Console.ResetColor();
                 return;
             }
@@ -142,29 +142,29 @@ class Program
             
             foreach (var producto in productos)
             {
-                Console.WriteLine($"│ {producto.Id,-2} │ {Truncate(producto.Nombre, 23),-23} │ ${producto.Precio,-11:F2} │ {producto.Stock,-7} │");
+                Console.WriteLine($"│ {producto.Id,-2} │ {Truncate(producto.Nombre, 23),-23} │ ${producto.Precio,-11:F2} │ {producto.CantidadDisponible,-7} │");
             }
             
             Console.WriteLine("└────┴─────────────────────────┴──────────────┴─────────┘");
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n✅ Total de productos: {productos.Count}");
+            Console.WriteLine($"\nTotal de productos: {productos.Count}");
             Console.ResetColor();
         }
         else
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error al obtener productos: {response.StatusCode}");
+            Console.WriteLine($"Error al obtener productos: {response.StatusCode}");
             Console.ResetColor();
         }
     }
 
     static async Task ObtenerProductoPorId()
     {
-        Console.Write("\n🔍 Ingrese el ID del producto: ");
+        Console.Write("\nIngrese el ID del producto: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ ID inválido");
+            Console.WriteLine("ID inválido");
             Console.ResetColor();
             return;
         }
@@ -178,7 +178,7 @@ class Program
             if (producto != null)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\n✅ PRODUCTO ENCONTRADO:\n");
+                Console.WriteLine("\nPRODUCTO ENCONTRADO:\n");
                 Console.ResetColor();
                 MostrarDetalleProducto(producto);
             }
@@ -186,13 +186,13 @@ class Program
         else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"⚠️  Producto con ID {id} no encontrado");
+            Console.WriteLine($"Producto con ID {id} no encontrado");
             Console.ResetColor();
         }
         else
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error: {response.StatusCode}");
+            Console.WriteLine($"Error: {response.StatusCode}");
             Console.ResetColor();
         }
     }
@@ -200,36 +200,46 @@ class Program
     static async Task CrearProducto()
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("\n➕ CREAR NUEVO PRODUCTO\n");
+        Console.WriteLine("\nCREAR NUEVO PRODUCTO\n");
         Console.ResetColor();
 
         var nuevoProducto = new ProductoCreateDto();
 
-        Console.Write("📝 Nombre: ");
+        Console.Write("Nombre: ");
         nuevoProducto.Nombre = Console.ReadLine() ?? "";
 
-        Console.Write("📄 Descripción: ");
+        Console.Write("Descripción: ");
         nuevoProducto.Descripcion = Console.ReadLine() ?? "";
 
-        Console.Write("💰 Precio: $");
-        if (!decimal.TryParse(Console.ReadLine(), out decimal precio))
+        Console.Write("Precio: $");
+        var precioInput = Console.ReadLine();
+        if (!decimal.TryParse(precioInput, NumberStyles.Number, CultureInfo.CurrentCulture, out decimal precio))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ Precio inválido");
+            Console.WriteLine("Precio inválido");
             Console.ResetColor();
             return;
         }
         nuevoProducto.Precio = precio;
 
-        Console.Write("📦 Stock: ");
-        if (!int.TryParse(Console.ReadLine(), out int stock))
+        Console.Write("Stock: ");
+        var stockInput = Console.ReadLine();
+        if (!int.TryParse(stockInput, NumberStyles.Integer, CultureInfo.CurrentCulture, out int stock))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ Stock inválido");
+            Console.WriteLine("Stock inválido");
             Console.ResetColor();
             return;
         }
-        nuevoProducto.Stock = stock;
+        nuevoProducto.CantidadDisponible = stock;
+
+        Console.Write("Catálogo ID (Enter para 1): ");
+        var catalogoInput = Console.ReadLine();
+        if (!int.TryParse(catalogoInput, NumberStyles.Integer, CultureInfo.CurrentCulture, out int catalogoId) || catalogoId <= 0)
+        {
+            catalogoId = 1;
+        }
+        nuevoProducto.CatalogoId = catalogoId;
 
         var response = await httpClient.PostAsJsonAsync($"{baseUrl}/productos", nuevoProducto);
         
@@ -238,14 +248,14 @@ class Program
             var productoCreado = await response.Content.ReadFromJsonAsync<ProductoDto>();
             
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n🎉 ¡PRODUCTO CREADO EXITOSAMENTE!");
+            Console.WriteLine("\nPRODUCTO CREADO EXITOSAMENTE");
             Console.ResetColor();
             
             if (productoCreado != null)
             {
                 MostrarDetalleProducto(productoCreado);
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("\n📧 Se enviará un email de notificación...");
+                Console.WriteLine("\nSe enviará un email de notificación...");
                 Console.ResetColor();
             }
         }
@@ -253,7 +263,7 @@ class Program
         {
             var error = await response.Content.ReadAsStringAsync();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error al crear producto: {response.StatusCode}");
+            Console.WriteLine($"Error al crear producto: {response.StatusCode}");
             Console.WriteLine($"Detalle: {error}");
             Console.ResetColor();
         }
@@ -261,11 +271,11 @@ class Program
 
     static async Task ActualizarProducto()
     {
-        Console.Write("\n🔍 Ingrese el ID del producto a actualizar: ");
+        Console.Write("\nIngrese el ID del producto a actualizar: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ ID inválido");
+            Console.WriteLine("ID inválido");
             Console.ResetColor();
             return;
         }
@@ -275,7 +285,7 @@ class Program
         if (!getResponse.IsSuccessStatusCode)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"⚠️  Producto con ID {id} no encontrado");
+            Console.WriteLine($"Producto con ID {id} no encontrado");
             Console.ResetColor();
             return;
         }
@@ -283,44 +293,72 @@ class Program
         var productoActual = await getResponse.Content.ReadFromJsonAsync<ProductoDto>();
         
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("\n✏️  ACTUALIZAR PRODUCTO\n");
+        Console.WriteLine("\nACTUALIZAR PRODUCTO\n");
         Console.WriteLine("(Presione Enter para mantener el valor actual)\n");
         Console.ResetColor();
 
         var productoActualizado = new ProductoUpdateDto();
 
-        Console.Write($"📝 Nombre [{productoActual?.Nombre}]: ");
+        Console.Write($"Nombre [{productoActual?.Nombre}]: ");
         var nombre = Console.ReadLine();
         productoActualizado.Nombre = string.IsNullOrWhiteSpace(nombre) ? productoActual?.Nombre ?? "" : nombre;
 
-        Console.Write($"📄 Descripción [{productoActual?.Descripcion}]: ");
+        Console.Write($"Descripción [{productoActual?.Descripcion}]: ");
         var descripcion = Console.ReadLine();
         productoActualizado.Descripcion = string.IsNullOrWhiteSpace(descripcion) ? productoActual?.Descripcion ?? "" : descripcion;
 
-        Console.Write($"💰 Precio [${productoActual?.Precio:F2}]: $");
+        Console.Write($"Precio [${productoActual?.Precio:F2}]: $");
         var precioStr = Console.ReadLine();
-        productoActualizado.Precio = string.IsNullOrWhiteSpace(precioStr) ? productoActual?.Precio ?? 0 : decimal.Parse(precioStr);
+        if (string.IsNullOrWhiteSpace(precioStr))
+        {
+            productoActualizado.Precio = productoActual?.Precio ?? 0;
+        }
+        else if (!decimal.TryParse(precioStr, NumberStyles.Number, CultureInfo.CurrentCulture, out var precioNuevo))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Precio inválido");
+            Console.ResetColor();
+            return;
+        }
+        else
+        {
+            productoActualizado.Precio = precioNuevo;
+        }
 
-        Console.Write($"📦 Stock [{productoActual?.Stock}]: ");
+        Console.Write($"Stock [{productoActual?.CantidadDisponible}]: ");
         var stockStr = Console.ReadLine();
-        productoActualizado.Stock = string.IsNullOrWhiteSpace(stockStr) ? productoActual?.Stock ?? 0 : int.Parse(stockStr);
+        if (string.IsNullOrWhiteSpace(stockStr))
+        {
+            productoActualizado.CantidadDisponible = productoActual?.CantidadDisponible ?? 0;
+        }
+        else if (!int.TryParse(stockStr, NumberStyles.Integer, CultureInfo.CurrentCulture, out var stockNuevo))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Stock inválido");
+            Console.ResetColor();
+            return;
+        }
+        else
+        {
+            productoActualizado.CantidadDisponible = stockNuevo;
+        }
 
         var response = await httpClient.PutAsJsonAsync($"{baseUrl}/productos/{id}", productoActualizado);
         
         if (response.IsSuccessStatusCode)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n✅ ¡PRODUCTO ACTUALIZADO EXITOSAMENTE!");
+            Console.WriteLine("\nPRODUCTO ACTUALIZADO EXITOSAMENTE");
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("📧 Se enviará un email de notificación...");
+            Console.WriteLine("Se enviará un email de notificación...");
             Console.ResetColor();
         }
         else
         {
             var error = await response.Content.ReadAsStringAsync();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error al actualizar producto: {response.StatusCode}");
+            Console.WriteLine($"Error al actualizar producto: {response.StatusCode}");
             Console.WriteLine($"Detalle: {error}");
             Console.ResetColor();
         }
@@ -328,11 +366,11 @@ class Program
 
     static async Task EliminarProducto()
     {
-        Console.Write("\n🗑️  Ingrese el ID del producto a eliminar: ");
+        Console.Write("\nIngrese el ID del producto a eliminar: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ ID inválido");
+            Console.WriteLine("ID inválido");
             Console.ResetColor();
             return;
         }
@@ -342,7 +380,7 @@ class Program
         if (!getResponse.IsSuccessStatusCode)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"⚠️  Producto con ID {id} no encontrado");
+            Console.WriteLine($"Producto con ID {id} no encontrado");
             Console.ResetColor();
             return;
         }
@@ -350,7 +388,7 @@ class Program
         var producto = await getResponse.Content.ReadFromJsonAsync<ProductoDto>();
         
         Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("\n⚠️  Está a punto de eliminar el siguiente producto:");
+        Console.WriteLine("\nADVERTENCIA: Está a punto de eliminar el siguiente producto:");
         Console.ResetColor();
         MostrarDetalleProducto(producto!);
 
@@ -361,7 +399,7 @@ class Program
 
         if (confirmacion != "S")
         {
-            Console.WriteLine("❌ Operación cancelada");
+            Console.WriteLine("Operación cancelada");
             return;
         }
 
@@ -370,17 +408,17 @@ class Program
         if (response.IsSuccessStatusCode)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n✅ ¡PRODUCTO ELIMINADO EXITOSAMENTE!");
+            Console.WriteLine("\nPRODUCTO ELIMINADO EXITOSAMENTE");
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("📧 Se enviará un email de notificación...");
+            Console.WriteLine("Se enviará un email de notificación...");
             Console.ResetColor();
         }
         else
         {
             var error = await response.Content.ReadAsStringAsync();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error al eliminar producto: {response.StatusCode}");
+            Console.WriteLine($"Error al eliminar producto: {response.StatusCode}");
             Console.WriteLine($"Detalle: {error}");
             Console.ResetColor();
         }
@@ -388,13 +426,13 @@ class Program
 
     static async Task BuscarProductoPorNombre()
     {
-        Console.Write("\n🔍 Ingrese el nombre (o parte del nombre): ");
+        Console.Write("\nIngrese el nombre (o parte del nombre): ");
         var nombre = Console.ReadLine();
 
         if (string.IsNullOrWhiteSpace(nombre))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ Debe ingresar un nombre");
+            Console.WriteLine("Debe ingresar un nombre");
             Console.ResetColor();
             return;
         }
@@ -409,13 +447,13 @@ class Program
             if (resultados == null || resultados.Count == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️  No se encontraron productos con el nombre '{nombre}'");
+                Console.WriteLine($"No se encontraron productos con el nombre '{nombre}'");
                 Console.ResetColor();
                 return;
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n✅ Se encontraron {resultados.Count} producto(s):\n");
+            Console.WriteLine($"\nSe encontraron {resultados.Count} producto(s):\n");
             Console.ResetColor();
 
             Console.WriteLine("┌────┬─────────────────────────┬──────────────┬─────────┐");
@@ -424,7 +462,7 @@ class Program
             
             foreach (var producto in resultados)
             {
-                Console.WriteLine($"│ {producto.Id,-2} │ {Truncate(producto.Nombre, 23),-23} │ ${producto.Precio,-11:F2} │ {producto.Stock,-7} │");
+                Console.WriteLine($"│ {producto.Id,-2} │ {Truncate(producto.Nombre, 23),-23} │ ${producto.Precio,-11:F2} │ {producto.CantidadDisponible,-7} │");
             }
             
             Console.WriteLine("└────┴─────────────────────────┴──────────────┴─────────┘");
@@ -432,19 +470,23 @@ class Program
         else
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"❌ Error al buscar productos: {response.StatusCode}");
+            Console.WriteLine($"Error al buscar productos: {response.StatusCode}");
             Console.ResetColor();
         }
     }
 
     static void MostrarDetalleProducto(ProductoDto producto)
     {
+        var fechaLocal = producto.FechaCreacion.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
+
         Console.WriteLine("┌─────────────────────────────────────────────┐");
         Console.WriteLine($"│ ID:          {producto.Id,-30} │");
         Console.WriteLine($"│ Nombre:      {Truncate(producto.Nombre, 30),-30} │");
         Console.WriteLine($"│ Descripción: {Truncate(producto.Descripcion, 30),-30} │");
         Console.WriteLine($"│ Precio:      ${producto.Precio,-29:F2} │");
-        Console.WriteLine($"│ Stock:       {producto.Stock,-30} │");
+        Console.WriteLine($"│ Stock:       {producto.CantidadDisponible,-30} │");
+        Console.WriteLine($"│ Catálogo ID: {producto.CatalogoId,-30} │");
+        Console.WriteLine($"│ Creado:      {Truncate(fechaLocal, 30),-30} │");
         Console.WriteLine("└─────────────────────────────────────────────┘");
     }
 

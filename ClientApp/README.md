@@ -1,33 +1,20 @@
-# 📱 ClientApp - Cliente de Consola para Catálogo de Productos
+# ClientApp - Cliente de Consola
 
-Aplicación de consola interactiva para consumir la API REST del BusinessTier.
+Aplicación de consola para consumir la API REST de productos que publica el BusinessTier. Permite consultar, crear, actualizar y eliminar productos y, al hacerlo, dispara los eventos procesados por KafkaConsumer y MailDev.
 
-## 🚀 Características
+## Requisitos
 
-- ✅ Listar todos los productos
-- 🔍 Buscar producto por ID
-- 🔍 Buscar producto por nombre
-- ➕ Crear nuevos productos
-- ✏️ Actualizar productos existentes
-- 🗑️ Eliminar productos
-- 🎨 Interfaz colorida y amigable
-- 📧 Notificaciones de eventos (vía Kafka → Email)
+- .NET SDK 9.0
+- BusinessTier disponible (por defecto en `http://localhost:8080`)
 
-## 📋 Requisitos
-
-- .NET 9.0 SDK
-- BusinessTier ejecutándose en http://localhost:8080
-
-## 🏃 Ejecutar la Aplicación
-
-### Opción 1: Desarrollo Local
+## Ejecución
 
 ```bash
 cd ClientApp
 dotnet run
 ```
 
-### Opción 2: Build y Ejecutar
+Si prefieres compilar antes:
 
 ```bash
 cd ClientApp
@@ -35,177 +22,52 @@ dotnet build
 dotnet run --no-build
 ```
 
-## 🎯 Uso
+La URL base del API puede establecerse con la variable `CLIENTAPP_BASEURL` o pasarse como primer argumento al ejecutar `dotnet run`.
 
-Al iniciar la aplicación, se mostrará un menú interactivo:
+## Operaciones Disponibles
 
-```
-╔════════════════════════════════════════════════╗
-║              MENÚ PRINCIPAL                    ║
-╚════════════════════════════════════════════════╝
+Menú principal:
 
-📋 CONSULTAS:
-  1️⃣  - Listar todos los productos
-  2️⃣  - Buscar producto por ID
-  6️⃣  - Buscar producto por nombre
+- (1) Listar productos
+- (2) Buscar por ID
+- (3) Crear producto
+- (4) Actualizar producto
+- (5) Eliminar producto
+- (6) Buscar por nombre
+- (0) Salir
 
-✏️  OPERACIONES:
-  3️⃣  - Crear nuevo producto
-  4️⃣  - Actualizar producto
-  5️⃣  - Eliminar producto
+Cada opción solicita los datos necesarios y muestra la respuesta en tablas formateadas.
 
-  0️⃣  - Salir
-```
+## Flujo de Integración
 
-### Ejemplos de Uso
+1. ClientApp llama al BusinessTier mediante HTTP.
+2. BusinessTier delega en DataTier por gRPC.
+3. DataTier publica eventos en Kafka.
+4. KafkaConsumer lee los eventos y envía correos mediante MailDev o el SMTP configurado.
 
-#### 1. Listar Productos
-
-Muestra una tabla con todos los productos:
-
-```
-┌────┬─────────────────────────┬──────────────┬─────────┐
-│ ID │ Nombre                  │ Precio       │ Stock   │
-├────┼─────────────────────────┼──────────────┼─────────┤
-│ 1  │ Laptop Dell             │ $999.99      │ 10      │
-│ 2  │ Mouse Logitech          │ $29.99       │ 50      │
-└────┴─────────────────────────┴──────────────┴─────────┘
-```
-
-#### 2. Crear Producto
-
-La aplicación solicitará:
-- Nombre del producto
-- Descripción
-- Precio
-- Stock
-
-Después de crear el producto:
-- ✅ Se muestra confirmación
-- 📧 Se envía un email automático (vía KafkaConsumer)
-
-#### 3. Actualizar Producto
-
-- Ingresa el ID del producto
-- Muestra los valores actuales
-- Presiona Enter para mantener valores o ingresa nuevos
-
-#### 4. Eliminar Producto
-
-- Ingresa el ID del producto
-- Muestra confirmación antes de eliminar
-- Requiere confirmación (S/N)
-
-## ⚙️ Configuración
-
-Al iniciar, la aplicación pregunta por la URL del API:
-
-```
-🔧 Configuración:
-Ingrese la URL del API (Enter para usar http://localhost:8080/api):
-```
-
-Puedes ingresar una URL personalizada o presionar Enter para usar la predeterminada.
-
-## 🔗 Integración con el Sistema
-
-El ClientApp interactúa con todo el sistema:
-
-```
-┌─────────────┐
-│  ClientApp  │
-└──────┬──────┘
-       │ HTTP REST
-       ▼
-┌─────────────────┐
-│  BusinessTier   │ (Port 8080)
-└──────┬──────────┘
-       │ gRPC
-       ▼
-┌─────────────────┐
-│   DataTier      │ (Port 5001)
-└──────┬──────────┘
-       │ Kafka
-       ▼
-┌─────────────────┐
-│ KafkaConsumer   │
-└──────┬──────────┘
-       │ SMTP
-       ▼
-┌─────────────────┐
-│  Gmail / Email  │
-└─────────────────┘
-```
-
-## 📊 Flujo de Eventos
-
-1. **Usuario crea producto en ClientApp**
-   - ClientApp → POST /api/productos → BusinessTier
-   - BusinessTier → gRPC CreateProducto → DataTier
-   - DataTier → Kafka Topic "product-events"
-   - KafkaConsumer → Lee evento → Envía email
-
-2. **Notificación por Email**
-   - Email con template HTML
-   - Detalles del producto creado
-   - Timestamp del evento
-
-## 🎨 Características de la UI
-
-- ✅ Colores para mejorar la experiencia
-- 📋 Tablas formateadas
-- ⚠️ Mensajes de error claros
-- 🎉 Confirmaciones visuales
-- 🔄 Navegación intuitiva
-
-## 🛠️ Tecnologías Utilizadas
-
-- **HttpClient**: Para requests HTTP
-- **System.Net.Http.Json**: Serialización JSON
-- **Console API**: Interfaz de usuario
-
-## 📝 Estructura del Proyecto
+## Estructura
 
 ```
 ClientApp/
 ├── ClientApp.csproj
-├── Program.cs           # Aplicación principal
-├── README.md
+├── Program.cs
 └── DTOs/
     ├── ProductoDto.cs
     ├── ProductoCreateDto.cs
     └── ProductoUpdateDto.cs
 ```
 
-## 🐛 Troubleshooting
+## Solución de Problemas
 
-### Error: "No se puede conectar al API"
+| Problema | Posibles causas |
+| --- | --- |
+| Error de conexión | BusinessTier está detenido o la URL configurada no es correcta. |
+| 404 Not Found | El recurso llamado no corresponde a `/api/productos`. |
+| 500 Internal Server Error | DataTier o la base de datos no responden; revisa los logs de BusinessTier. |
 
-**Solución**:
-1. Verifica que BusinessTier esté ejecutándose
-2. Verifica la URL (http://localhost:8080)
-3. Revisa el firewall
+## Referencias
 
-### Error: "404 Not Found"
-
-**Solución**:
-1. Verifica que el endpoint sea `/api/productos`
-2. Asegúrate de que BusinessTier tenga el controlador
-
-### Error: "500 Internal Server Error"
-
-**Solución**:
-1. Revisa los logs de BusinessTier
-2. Verifica que DataTier esté funcionando
-3. Verifica la conexión a MySQL
-
-## 📚 Documentación Relacionada
-
-- [BusinessTier API](../BusinessTier/README.md)
-- [DataTier gRPC](../DataTier/README.md)
+- [BusinessTier](../BusinessTier/README.md)
+- [DataTier](../DataTier/README.md)
 - [KafkaConsumer](../KafkaConsumer/README.md)
-- [Email Setup Guide](../docs/email-setup-guide.md)
-
----
-
-**Desarrollado como parte del proyecto AS-Catalogo-NET**
+- [Guía de email](../docs/email-setup-guide.md)

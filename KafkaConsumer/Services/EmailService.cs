@@ -334,15 +334,21 @@ public class EmailService
         
         try
         {
-            var smtpServer = _config["Email:SmtpServer"];
-            var smtpPort = int.Parse(_config["Email:SmtpPort"] ?? "587");
-            var username = _config["Email:Username"];
-            var password = _config["Email:Password"];
+            var smtpServer = _config["Email:SmtpServer"] ?? Environment.GetEnvironmentVariable("Email__SmtpServer");
+            var portSetting = _config["Email:SmtpPort"] ?? Environment.GetEnvironmentVariable("Email__SmtpPort");
+            var username = _config["Email:Username"] ?? Environment.GetEnvironmentVariable("Email__Username");
+            var password = _config["Email:Password"] ?? Environment.GetEnvironmentVariable("Email__Password");
+
+            _logger.LogInformation($"SMTP config -> server: {smtpServer ?? "null"}, portSetting: {portSetting ?? "null"}");
 
             // Para servidores locales como MailDev, no usar SSL/TLS
             var isLocalServer = smtpServer?.Contains("maildev") == true || 
                                smtpServer?.Contains("localhost") == true ||
                                smtpServer?.Contains("127.0.0.1") == true;
+
+            var smtpPort = isLocalServer
+                ? int.Parse(string.IsNullOrWhiteSpace(portSetting) ? "1025" : portSetting)
+                : int.Parse(string.IsNullOrWhiteSpace(portSetting) ? "587" : portSetting);
 
             if (isLocalServer)
             {
