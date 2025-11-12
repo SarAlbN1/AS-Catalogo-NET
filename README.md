@@ -166,6 +166,7 @@ AS-Catalogo-NET/
 
 - Alejandro Caicedo (INDI260)
 - Sara Albarracín (SarAlbN1)
+- Alejandro Pinzón (alejandro09pf)
+- Claude (claude)
 
 Proyecto académico para prácticas de Arquitectura de Software.
-# Aplicar migraciones pendientes
