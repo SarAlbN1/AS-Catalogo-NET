@@ -27,12 +27,12 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 # Copiar los binarios publicados
 COPY --from=publish /app/publish .
 
-# Variables de entorno (estas se pueden sobrescribir en docker-compose)
+# Variables de entorno por defecto (pueden sobrescribirse en docker-compose)
 ENV KAFKA__BOOTSTRAPSERVERS="kafka:29092"
 ENV KAFKA__GROUPID="product-consumer-group"
 ENV KAFKA__TOPIC="product-events"
-ENV EMAIL__SMTPSERVER="smtp.gmail.com"
-ENV EMAIL__SMTPPORT="587"
+ENV EMAIL__SMTPSERVER="maildev"
+ENV EMAIL__SMTPPORT="1025"
 
 # Punto de entrada
 ENTRYPOINT ["dotnet", "KafkaConsumer.dll"]
