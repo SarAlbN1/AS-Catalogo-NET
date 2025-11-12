@@ -1,37 +1,3 @@
-git clone https://github.com/SarAlbN1/AS-Catalogo-NET.git
-docker-compose up -d
-docker-compose ps
-docker-compose logs -f app
-dotnet restore
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-dotnet run
-dotnet ef migrations add NombreDeLaMigracion
-dotnet ef database update
-dotnet ef database update NombreMigracionAnterior
-dotnet ef migrations remove
-dotnet ef migrations list
-docker-compose logs -f mysql
-docker-compose logs -f app
-docker-compose exec mysql mysql -u catalogo_user -p
-docker-compose exec app bash
-docker-compose up -d --build app
-docker-compose ps
-docker-compose down
-docker-compose down -v
-docker-compose exec mysql mysql -u catalogo_user -p catalogo_db
-docker-compose exec mysql mysqldump -u catalogo_user -p catalogo_db > backup.sql
-docker-compose exec -T mysql mysql -u catalogo_user -p catalogo_db < backup.sql
-dotnet test
-dotnet test /p:CollectCoverage=true
-docker-compose ps
-docker-compose logs mysql
-docker-compose logs -f mysql
-docker-compose down -v
-docker system prune -a
-docker-compose up -d --build
-docker-compose exec app dotnet ef database update
-docker-compose restart app
 # AS-Catalogo-NET
 
 Plataforma de catálogo de productos construida con .NET 8/9, MySQL y Kafka. El sistema incluye una API REST (BusinessTier), un servicio gRPC (DataTier), un worker de eventos (KafkaConsumer) y un cliente de consola (ClientApp). Los servicios se orquestan mediante Docker Compose y se integran con MailDev para observar las notificaciones por correo.
