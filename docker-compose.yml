@@ -1,6 +1,7 @@
-version: '3.8'
-
 services:
+  # ============================================
+  # BASE DE DATOS - MySQL 8.0
+  # ============================================
   mysql:
     image: mysql:8.0
     container_name: catalogo_mysql
@@ -23,23 +24,132 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: catalogo_app
+  # ============================================
+  # MESSAGE BROKER - Zookeeper (requerido por Kafka)
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: catalogo_zookeeper
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "8080:8080"
+      - "2181:2181"
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # MESSAGE BROKER - Kafka
+  # ============================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: catalogo_kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # KAFKA UI - Interfaz web para administrar Kafka
+  # ============================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: catalogo_kafka_ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - catalogo_network
+
+  # ============================================
+  # DATA TIER - Servidor gRPC (Despliegue 1)
+  # ============================================
+  data-tier:
+    build:
+      context: ./DataTier
+      dockerfile: Dockerfile
+    container_name: catalogo_data_tier
+    restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__Topic=product-events
     networks:
       - catalogo_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
+  # BUSINESS TIER - API REST (Despliegue 4)
+  # ============================================
+  business-tier:
+    build:
+      context: ./BusinessTier
+      dockerfile: Dockerfile
+    container_name: catalogo_business_tier
+    restart: unless-stopped
+    depends_on:
+      data-tier:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - GrpcSettings__DataTierUrl=http://data-tier:5001
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 volumes:
   mysql_data:
