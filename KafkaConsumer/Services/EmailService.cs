@@ -358,7 +358,7 @@ public class EmailService
             }
             else
             {
-                // Conexión con StartTls para servidores externos (Gmail, etc.)
+                // Conexión con StartTls para servidores SMTP externos
                 _logger.LogInformation($"Conectando a servidor SMTP externo: {smtpServer}:{smtpPort}");
                 await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             }
