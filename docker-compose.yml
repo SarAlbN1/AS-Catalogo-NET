@@ -1,0 +1,172 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: catalogo_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: catalogo_db
+      MYSQL_USER: catalogo_user
+      MYSQL_PASSWORD: catalogo_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: catalogo_zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: catalogo_kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - catalogo_network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: catalogo_kafka_ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - catalogo_network
+
+  datatier:
+    build:
+      context: .
+      dockerfile: DataTier/Dockerfile
+    container_name: catalogo_datatier
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__Topic=product-events
+    ports:
+      - "5001:5001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - catalogo_network
+
+  businesstier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catalogo_businesstier
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - GrpcSettings__DataTierUrl=http://datatier:5001
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=catalogo_db;User=catalogo_user;Password=catalogo_pass;
+      - PreferGrpc=true
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      datatier:
+        condition: service_started
+    networks:
+      - catalogo_network
+
+  maildev:
+    image: maildev/maildev
+    container_name: catalogo_maildev
+    restart: unless-stopped
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP Server
+    networks:
+      - catalogo_network
+
+  kafkaconsumer:
+    build:
+      context: .
+      dockerfile: KafkaConsumer/Dockerfile
+    container_name: catalogo_kafkaconsumer
+    restart: unless-stopped
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__GroupId=product-consumer-group
+      - Kafka__Topic=product-events
+      - Email__SmtpServer=maildev
+      - Email__SmtpPort=1025
+      - Email__Username=
+      - Email__Password=
+      - Email__FromAddress=catalogo@localhost.com
+      - Email__ToAddress=admin@localhost.com
+    depends_on:
+      kafka:
+        condition: service_healthy
+      maildev:
+        condition: service_started
+    networks:
+      - catalogo_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  catalogo_network:
+    driver: bridge

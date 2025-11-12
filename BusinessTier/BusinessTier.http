@@ -1,0 +1,6 @@
+@AS_Catalogo_NET_HostAddress = http://localhost:5290
+
+GET {{AS_Catalogo_NET_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

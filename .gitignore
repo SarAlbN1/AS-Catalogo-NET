@@ -1,0 +1,19 @@
+bin/
+obj/
+.vscode/
+.idea/
+*.user
+*.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Sensitive configuration
+**/appsettings.Development.json
+**/appsettings.Production.json
+
+# Logs
+*.log
+logs/
