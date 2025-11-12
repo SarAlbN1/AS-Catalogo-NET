@@ -23,11 +23,11 @@ public class MyAppDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Semilla mínima
-        modelBuilder.Entity<Catalogo>().HasData(new Catalogo { Id = 1 });
-        modelBuilder.Entity<Producto>().HasData(
-            new Producto { Id = 1, Nombre = "Laptop Dell XPS 15", Descripcion = "i7, 16GB, 512GB", Precio = 1299.99m, CantidadDisponible = 10, CatalogoId = 1, FechaCreacion = DateTime.UtcNow },
-            new Producto { Id = 2, Nombre = "Mouse Logitech MX Master 3", Descripcion = "Inalámbrico", Precio = 99.99m, CantidadDisponible = 50, CatalogoId = 1, FechaCreacion = DateTime.UtcNow }
-        );
+        // Semilla mínima - Comentado porque usamos Database First (datos en BD)
+        // modelBuilder.Entity<Catalogo>().HasData(new Catalogo { Id = 1 });
+        // modelBuilder.Entity<Producto>().HasData(
+        //     new Producto { Id = 1, Nombre = "Laptop Dell XPS 15", Descripcion = "i7, 16GB, 512GB", Precio = 1299.99m, CantidadDisponible = 10, CatalogoId = 1, FechaCreacion = DateTime.UtcNow },
+        //     new Producto { Id = 2, Nombre = "Mouse Logitech MX Master 3", Descripcion = "Inalámbrico", Precio = 99.99m, CantidadDisponible = 50, CatalogoId = 1, FechaCreacion = DateTime.UtcNow }
+        // );
     }
 }

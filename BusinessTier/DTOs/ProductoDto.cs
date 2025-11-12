@@ -9,4 +9,6 @@ public class ProductoDto
     public int CantidadDisponible { get; set; }
     public DateTime FechaCreacion { get; set; }
     public int CatalogoId { get; set; }
+    public DateTime? FechaActualizacion { get; set; }
+    public bool Activo { get; set; }
 }

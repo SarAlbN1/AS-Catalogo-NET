@@ -27,7 +27,9 @@ public class ProductosGrpcService : ProductosData.ProductosDataBase
         {
             _logger.LogInformation("Obteniendo todos los productos");
 
-            var productos = await _dbContext.Productos.ToListAsync();
+            var productos = await _dbContext.Productos
+                .Where(p => p.Activo == true)
+                .ToListAsync();
 
             var response = new ProductosList();
             response.Productos.AddRange(productos.Select(MapToProto));
@@ -82,7 +84,8 @@ public class ProductosGrpcService : ProductosData.ProductosDataBase
                 Precio = (decimal)request.Precio,
                 CantidadDisponible = request.CantidadDisponible,
                 CatalogoId = request.CatalogoId,
-                FechaCreacion = DateTime.UtcNow
+                FechaCreacion = DateTime.UtcNow,
+                Activo = true
             };
 
             await _dbContext.Productos.AddAsync(producto);
@@ -159,10 +162,12 @@ public class ProductosGrpcService : ProductosData.ProductosDataBase
             var productName = producto.Nombre;
             var productId = producto.Id;
 
-            _dbContext.Productos.Remove(producto);
+            // Soft delete: marcar como inactivo en lugar de eliminar
+            producto.Activo = false;
+            _dbContext.Productos.Update(producto);
             await _dbContext.SaveChangesAsync();
 
-            _logger.LogInformation($"Producto con ID {request.Id} eliminado");
+            _logger.LogInformation($"Producto con ID {request.Id} eliminado (soft delete)");
 
             // Publicar evento a Kafka
             await _kafkaProducer.PublishProductDeletedAsync(productId, productName);
@@ -194,7 +199,9 @@ public class ProductosGrpcService : ProductosData.ProductosDataBase
             Precio = (double)producto.Precio,
             CantidadDisponible = producto.CantidadDisponible,
             FechaCreacion = producto.FechaCreacion.ToString("yyyy-MM-ddTHH:mm:ss"),
-            CatalogoId = producto.CatalogoId
+            CatalogoId = producto.CatalogoId,
+            FechaActualizacion = producto.FechaActualizacion?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "",
+            Activo = producto.Activo ?? true
         };
     }
 }

@@ -24,6 +24,8 @@ message Producto {
   int32 cantidad_disponible = 5;
   string fecha_creacion = 6;
   int32 catalogo_id = 7;
+  string fecha_actualizacion = 8;
+  bool activo = 9;
 }
 
 message ProductosList {
